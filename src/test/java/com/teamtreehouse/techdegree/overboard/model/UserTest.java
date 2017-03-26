@@ -5,102 +5,101 @@ import com.teamtreehouse.techdegree.overboard.exc.VotingException;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
-
 import static org.junit.Assert.*;
 
-/**
- * Created by romanmayer on 02/03/2017.
- */
-public class QuestionTest {
+public class UserTest {
 
-    private User author;
+    private User questioner;
+    private User answerer;
+    private User randomUser;
     private Board board;
     private Question question;
+    private Answer answer;
 
     @Before
     public void setUp() throws Exception {
         board = new Board("King of Queens");
-        author = new User(board, "Doug Heffernan");
-        question = author.askQuestion("Where is the cheese?");
+        questioner = new User(board, "Doug Heffernan");
+        question = questioner.askQuestion("Where is the cheese?");
+        answerer = new User(board, "Carrie Heffernan");
+        answer = answerer.answerQuestion(question, "I told you it's in the car!");
+        randomUser = new User(board, "Deacon Palmer");
     }
 
     @Test
     public void questionersReputationGoesUpBy5PointsIfTheirQuestionIsUpvoted() {
-        int reputationBefore = author.getReputation();
-        User upvoter = new User(board, "Arthur Spooner");
+        int reputationBefore = questioner.getReputation();
 
-        question.addUpVoter(upvoter);
-        int reputationAfter = author.getReputation();
+        question.addUpVoter(randomUser);
+        int reputationAfter = questioner.getReputation();
 
         assertEquals(reputationBefore + 5, reputationAfter);
     }
 
     @Test
     public void answerersReputationGoesUpBy10PointsIfTheirAnswerIsUpvoted() {
-        User answerer = new User(board, "Carrie Heffernan");
+        // arrange
         int reputationBefore = answerer.getReputation();
 
-        Answer answer = answerer.answerQuestion(question, "I told you it's in the car!");
+        // act
         question.addAnswer(answer);
-        answer.addUpVoter(new User(board, "Arthur Spooner"));
+        answer.addUpVoter(randomUser);
 
+        // assert
         int reputationAfter = answerer.getReputation();
         assertEquals(reputationBefore + 10, reputationAfter);
     }
 
     @Test
-    public void answerersReputationGoesUpBy10PointsIfTheirAnswerIsAccepted() {
-        User answerer = new User(board, "Carrie Heffernan");
+    public void answerersReputationGoesUpBy15PointsIfTheirAnswerIsAccepted() {
         int reputationBefore = answerer.getReputation();
 
-        Answer answer = answerer.answerQuestion(question, "I told you it's in the car!");
         question.addAnswer(answer);
         answer.setAccepted(true);
-        // addUpVoter(new User(board, "Arthur Spooner"));
+        int reputationAfter = answerer.getReputation();
+
+        assertEquals(reputationBefore + 15, reputationAfter);
+    }
+
+    @Test
+    public void answerersReputationGoesDownBy1PointIfTheirAnswerIsDownVoted() {
+        int reputationBefore = answerer.getReputation();
+
+        question.addAnswer(answer);
+        answer.addDownVoter(randomUser);
 
         int reputationAfter = answerer.getReputation();
-        assertEquals(reputationBefore + 15, reputationAfter);
+        assertEquals(reputationBefore - 1, reputationAfter);
     }
 
     @Test(expected = VotingException.class)
     public void authorIsNotAllowedToUpvoteHisOwnQuestion() throws Exception {
-        author.upVote(question);
+        questioner.upVote(question);
     }
 
     @Test(expected = VotingException.class)
     public void authorIsNotAllowedToDownvoteHisOwnQuestion() throws Exception {
-        author.downVote(question);
+        questioner.downVote(question);
     }
 
     @Test(expected = VotingException.class)
     public void authorIsNotAllowedToUpvoteHisOwnAnswer() throws Exception {
-        User answerer = new User(board, "Carrie Heffernan");
-        Answer answer = answerer.answerQuestion(question, "FRIDGE!!!");
         answerer.upVote(answer);
     }
 
     @Test(expected = VotingException.class)
     public void authorIsNotAllowedToDownvoteHisOwnAnswer() throws Exception {
-        User answerer = new User(board, "Carrie Heffernan");
-        Answer answer = answerer.answerQuestion(question, "FRIDGE!!!");
         answerer.downVote(answer);
     }
 
     @Test
     public void theOriginalQuestionerIsAllowedToAcceptAnAnswer() {
-        User answerer = new User(board, "Carrie Heffernan");
-        Answer answer = answerer.answerQuestion(question, "FRIDGE!!!");
-        author.acceptAnswer(answer); // change author to "questioner"
+        questioner.acceptAnswer(answer);
     }
 
     @Test(expected = AnswerAcceptanceException.class)
     public void onlyTheOriginalQuestionerIsAllowedToAcceptAnAnswer() {
-        User answerer = new User(board, "Carrie Heffernan");
-        Answer answer = answerer.answerQuestion(question, "FRIDGE!!!");
-
-        User randomUser = new User(board, "Deacon Palmer");
-        randomUser.acceptAnswer(answer); // change author to "questioner"
+        randomUser.acceptAnswer(answer);
     }
 
 }
